@@ -1,33 +1,23 @@
 import time
 import os
 
-# Try common Mosquitto log locations
-LOG_PATHS = [
-    "/opt/homebrew/var/log/mosquitto/mosquitto.log"  # macOS (brew)
-]
-
-def find_log_file():
-    for path in LOG_PATHS:
-        if os.path.exists(path):
-            return path
-    print("[BROKER] No log file found in known locations.")
-    return None
+LOG_FILE = "/opt/homebrew/var/log/mosquitto/mosquitto.log"
 
 def tail_log(path):
-    print(f"[BROKER] Monitoring log file: {path}")
+    print("[BROKER] Monitoring log file:", path)
     with open(path, "r") as f:
-        # Go to end of file
         f.seek(0, os.SEEK_END)
         while True:
             line = f.readline()
             if line:
-                print("[BROKER LOG]", line.strip())  # simple print for now
-            time.sleep(0.2)
+                print("[BROKER LOG]", line.strip())
+            time.sleep(0.1)
 
 def main():
-    log_path = find_log_file()
-    if log_path:
-        tail_log(log_path)
+    if not os.path.exists(LOG_FILE):
+        print("[BROKER] Log file not found:", LOG_FILE)
+        return
+    tail_log(LOG_FILE)
 
 if __name__ == "__main__":
     main()
