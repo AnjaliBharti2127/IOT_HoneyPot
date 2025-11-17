@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>IoT Honeypot Dashboard</h2>
+
+<div class="card">
+    <h3>Summary</h3>
+    <p><strong>Total messages:</strong> {{ total }}</p>
+    <p style="color: red;"><strong>Suspicious:</strong> {{ suspicious }}</p>
+    <p style="color: green;"><strong>Normal:</strong> {{ normal }}</p>
+</div>
+
+<div class="card">
+    <h3>Attack Trend Over Time</h3>
+    <canvas id="attackChart"></canvas>
+</div>
+
+<div class="card">
+    <h3>Attack Type Breakdown</h3>
+    <canvas id="typeChart"></canvas>
+</div>
+
+<script>
+// Attack Trend Graph
+fetch("/api/attack_trends")
+  .then(r => r.json())
+  .then(data => {
+    new Chart(document.getElementById("attackChart"), {
+      type: "line",
+      data: {
+        labels: data.dates,
+        datasets: [{
+          label: "Attacks",
+          data: data.counts,
+          borderWidth: 2
+        }]
+      }
+    });
+  });
+
+// Attack Type Graph
+fetch("/api/attack_types")
+  .then(r => r.json())
+  .then(data => {
+    new Chart(document.getElementById("typeChart"), {
+      type: "pie",
+      data: {
+        labels: data.types,
+        datasets: [{
+          data: data.counts
+        }]
+      }
+    });
+  });
+</script>
+
+{% endblock %}

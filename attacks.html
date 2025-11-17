@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Attack Log Table</h2>
+
+<div class="card">
+    <table border="1" width="100%" cellspacing="0" cellpadding="8">
+        <tr style="background: #eee;">
+            <th>Timestamp</th>
+            <th>Topic</th>
+            <th>Payload</th>
+            <th>IP Address</th>
+            <th>Type</th>
+        </tr>
+
+        {% for row in logs %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+            <td style="color: {% if row[4]=='suspicious' %}red{% else %}green{% endif %}">
+                {{ row[4] }}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}
