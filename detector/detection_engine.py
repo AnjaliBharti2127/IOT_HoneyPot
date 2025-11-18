@@ -13,18 +13,18 @@ timestamps = deque(maxlen=20)
 ALERT_COOLDOWN = 3
 last_alert = 0
 
-def beep_alert():
+"""def beep_alert():
     os.system("afplay /System/Library/Sounds/Ping.aiff &")
     time.sleep(0.6)
     os.system("afplay /System/Library/Sounds/Ping.aiff &")
     time.sleep(0.6)
     os.system("afplay /System/Library/Sounds/Ping.aiff &")
+    """
 
 def alert(message):
     global last_alert
     if time.time() - last_alert > ALERT_COOLDOWN:
         print(message)
-        beep_alert()
         last_alert = time.time()
 
 def on_connect(client, userdata, flags, rc):
@@ -45,7 +45,7 @@ def on_message(client, userdata, msg):
         timestamps.append(now)
 
         # flood (3 msgs < 1.5 sec)
-        if len(timestamps) >= 3 and (timestamps[-1] - timestamps[-3] < 1.5):
+        if len(timestamps) >= 3 and (timestamps[-1] - timestamps[-3] < 3.0):
             alert("[ALERT] 🚨 Flood attack detected!")
         return
 
