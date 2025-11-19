@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 import time
 from collections import deque
-import os
+import json
 
 BROKER = "broker.hivemq.com"
 PORT = 1883
@@ -12,14 +12,6 @@ STATE_TOPIC = "door/lock/state"
 timestamps = deque(maxlen=20)
 ALERT_COOLDOWN = 3
 last_alert = 0
-
-"""def beep_alert():
-    os.system("afplay /System/Library/Sounds/Ping.aiff &")
-    time.sleep(0.6)
-    os.system("afplay /System/Library/Sounds/Ping.aiff &")
-    time.sleep(0.6)
-    os.system("afplay /System/Library/Sounds/Ping.aiff &")
-    """
 
 def alert(message):
     global last_alert
@@ -37,23 +29,52 @@ def on_message(client, userdata, msg):
 
     print(f"[LOG] {topic} -> {payload}")
 
-    # 1) Unauthorized control message (device never sends control)
+    # ======================================================================
+    # HANDLE CONTROL TOPIC (where commands arrive)
+    # ======================================================================
     if topic == CONTROL_TOPIC:
+
+        # ---- STEP 1: Try to parse JSON ----
+        try:
+            data = json.loads(payload)
+        except:
+            alert("[ALERT] 🚨 Invalid JSON → Attack detected!")
+            return
+
+        # ---- STEP 2: Check required fields ----
+        if "user" not in data or "pass" not in data or "cmd" not in data:
+            alert("[ALERT] 🚨 Missing credentials → Attack detected!")
+            return
+
+        # ---- STEP 3: Validate credentials ----
+        if data["user"] == "iotgroup" and data["pass"] == "doorlock":
+            # Valid remote user → NO alert
+            print("[DETECTOR] Authorized remote user command")
+            return
+
+        # ---- STEP 4: Credentials wrong → attacker ----
         alert("[ALERT] 🚨 Unauthorized control command detected!")
-        # also check for flood
+
+        # ---- STEP 5: Flood attack detection ----
         now = time.time()
         timestamps.append(now)
 
-        # flood (3 msgs < 1.5 sec)
         if len(timestamps) >= 3 and (timestamps[-1] - timestamps[-3] < 3.0):
             alert("[ALERT] 🚨 Flood attack detected!")
+
         return
 
-    # 2) State messages are normal
+    # ======================================================================
+    # HANDLE STATE MESSAGES (normal)
+    # ======================================================================
     if topic == STATE_TOPIC:
-        # Do nothing (legitimate)
+        # These are legitimate device updates
         return
 
+
+# ======================================================================
+# MQTT CLIENT INITIALIZATION
+# ======================================================================
 client = mqtt.Client("detector_engine")
 client.on_connect = on_connect
 client.on_message = on_message
